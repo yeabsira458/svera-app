@@ -10,13 +10,44 @@ import {
   getCurrentUser,
   signOutUser,
 } from "@/actions/post-actions";
+import { getEvents } from "@/actions/event-actions";
 
-// Icons
+// SVG Icons
+const PlayIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="text-white"
+  >
+    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+  </svg>
+);
+
+const SearchIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </svg>
+);
+
 const ChatIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
+    width="18"
+    height="18"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -28,36 +59,20 @@ const ChatIcon = () => (
   </svg>
 );
 
-const SendIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="22" y1="2" x2="11" y2="13"></line>
-    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-  </svg>
-);
-
 export default function LandingPage() {
   const [posts, setPosts] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [commentsMap, setCommentsMap] = useState<{ [postId: string]: any[] }>({});
   const [expandedComments, setExpandedComments] = useState<{ [postId: string]: boolean }>({});
-  const [commentInput, setCommentInput] = useState<{ [postId: string]: string }>({});
   const [isPending, startTransition] = useTransition();
 
-  // Load feed and auth state on mount
+  // Load feed, events, and auth state on mount
   useEffect(() => {
     loadFeed();
     checkAuth();
+    loadEvents();
   }, [categoryFilter]);
 
   const loadFeed = async () => {
@@ -66,6 +81,15 @@ export default function LandingPage() {
       setPosts(data);
     } catch (err) {
       console.error("Failed to load posts", err);
+    }
+  };
+
+  const loadEvents = async () => {
+    try {
+      const data = await getEvents();
+      setEvents(data);
+    } catch (err) {
+      console.error("Failed to load events", err);
     }
   };
 
@@ -99,21 +123,6 @@ export default function LandingPage() {
     }
   };
 
-  const handleSubmitComment = async (e: React.FormEvent, postId: string) => {
-    e.preventDefault();
-    const content = commentInput[postId];
-    if (!content || !content.trim()) return;
-
-    try {
-      await addComment(postId, content);
-      setCommentInput((prev) => ({ ...prev, [postId]: "" }));
-      const comments = await getPostComments(postId);
-      setCommentsMap((prev) => ({ ...prev, [postId]: comments }));
-    } catch (err) {
-      alert("Error adding comment: " + err);
-    }
-  };
-
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
       case "birth_info":
@@ -128,7 +137,6 @@ export default function LandingPage() {
     }
   };
 
-  // Calculate rough relative time
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -144,362 +152,557 @@ export default function LandingPage() {
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
+  const formatEventDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return {
+      day: date.getDate().toString().padStart(2, "0"),
+      month: date.toLocaleString("en-US", { month: "short" }).toUpperCase(),
+      year: date.getFullYear(),
+      time: date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    };
+  };
+
+  // Mock list of Sidama offices & desk items matching layout style
+  const deskServices = [
+    { label: "Birth Registry", icon: "👶", color: "bg-orange-50 text-orange-600 border-orange-100" },
+    { label: "Marriage Records", icon: "💍", color: "bg-blue-50 text-blue-600 border-blue-100" },
+    { label: "Death Registry", icon: "🪦", color: "bg-green-50 text-green-600 border-green-100" },
+    { label: "Record Corrections", icon: "📋", color: "bg-purple-50 text-purple-600 border-purple-100" },
+    { label: "Statistics Division", icon: "📊", color: "bg-indigo-50 text-indigo-600 border-indigo-100" },
+    { label: "Woreda Offices", icon: "🏛️", color: "bg-amber-50 text-amber-600 border-amber-100" },
+  ];
+
   return (
-    <div className="min-h-screen bg-white md:bg-gray-50 flex flex-col font-sans">
-      {/* Premium Header */}
-      <header className="sticky top-0 bg-white border-b z-40 shadow-sm backdrop-blur-md bg-white/95">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 md:py-4 flex flex-col md:flex-row justify-between items-center gap-3">
-          <div className="flex justify-between items-center w-full md:w-auto">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 md:w-10 md:h-10 bg-black rounded-xl flex items-center justify-center text-white font-bold text-lg shadow">
-                SV
-              </div>
-              <div>
-                <h1 className="font-extrabold text-lg md:text-xl tracking-tight text-gray-900 leading-none">
-                  SVERA
-                </h1>
-              </div>
-            </div>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-gray-800">
+      
+      {/* 1. Top Announcement Bar */}
+      <div className="bg-red-700 text-white py-2.5 px-4 text-xs font-semibold tracking-wider text-center flex flex-wrap justify-center gap-2 items-center border-b border-red-800 shadow-inner">
+        <span>SIDAMA REGIONAL STATE GOVERNMENT</span>
+        <span className="hidden sm:inline">•</span>
+        <span>VITAL EVENTS REGISTRATION AGENCY (SVERA)</span>
+        <span className="bg-yellow-400 text-slate-950 px-2 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">Official Portal</span>
+      </div>
 
-            {/* Mobile Auth Status (Right side of header) */}
-            <div className="flex md:hidden items-center gap-2">
-               {currentUser ? (
-                 <button
-                   onClick={handleSignOut}
-                   disabled={isPending}
-                   className="text-xs font-semibold px-3 py-1.5 bg-gray-100 rounded-full text-gray-700"
-                 >
-                   Log Out
-                 </button>
-               ) : (
-                 <Link href="/login" className="text-xs font-semibold px-3 py-1.5 bg-black text-white rounded-full">
-                   Log In
-                 </Link>
-               )}
+      {/* 2. Main Header */}
+      <header className="sticky top-0 bg-white/95 backdrop-blur-md border-b z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
+          {/* Logo & Agency Name */}
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-tr from-red-600 to-amber-500 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-md">
+              SV
             </div>
-          </div>
+            <div>
+              <h1 className="font-black text-xl tracking-tight text-slate-900 leading-none">
+                SVERA
+              </h1>
+              <span className="text-[10px] text-gray-500 font-semibold tracking-wider uppercase">Sidama Vital Events</span>
+            </div>
+          </Link>
 
-          <nav className="hidden md:flex items-center gap-4 flex-wrap">
+          {/* Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-6">
+            <Link href="/" className="text-sm font-bold text-slate-900 hover:text-red-600 transition">
+              Home
+            </Link>
+            <Link href="/about" className="text-sm font-bold text-slate-500 hover:text-slate-950 transition">
+              About Us
+            </Link>
+            <Link href="/events" className="text-sm font-bold text-slate-500 hover:text-slate-950 transition">
+              Upcoming Events
+            </Link>
+
             {currentUser?.role === "admin" ? (
-              <>
-                <Link
-                  href="/admin/post-news"
-                  className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-semibold rounded-full shadow-sm transition"
-                >
-                  Post News
-                </Link>
-                <Link
-                  href="/admin/inbox"
-                  className="text-sm font-semibold text-gray-600 hover:text-black transition"
-                >
-                  Review Inbox
-                </Link>
-                <Link
-                  href="/chat"
-                  className="text-sm font-semibold text-gray-600 hover:text-black transition"
-                >
-                  Chat Portal
-                </Link>
-              </>
+              <Link
+                href="/admin/post-news"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow transition"
+              >
+                Admin Dashboard
+              </Link>
             ) : (
-              <>
-                <Link
-                  href="/submit-request"
-                  className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-semibold rounded-full shadow-sm transition"
-                >
-                  Submit Request
-                </Link>
-                <Link
-                  href="/my-requests"
-                  className="text-sm font-medium text-gray-600 hover:text-black transition"
-                >
-                  My Requests
-                </Link>
-                {currentUser && (
-                  <Link
-                    href="/chat"
-                    className="text-sm font-medium text-gray-600 hover:text-black transition"
-                  >
-                    Chat
-                  </Link>
-                )}
-              </>
+              <span className="text-xs text-gray-400 italic">Civil Registration Service</span>
             )}
 
-            {currentUser ? (
-              <div className="flex items-center gap-3 border-l pl-4 ml-2">
-                <div className="text-right">
-                  <p className="text-sm font-bold text-gray-900">
-                    {currentUser.full_name || "Citizen"}
-                  </p>
-                </div>
+            {currentUser && (
+              <div className="flex items-center gap-3 border-l pl-4">
+                <span className="text-xs font-bold text-slate-900">{currentUser.full_name || "Admin"}</span>
                 <button
                   onClick={handleSignOut}
                   disabled={isPending}
-                  className="text-xs font-semibold text-gray-500 hover:text-red-600 transition ml-2"
+                  className="text-xs font-bold text-red-500 hover:text-red-700 transition"
                 >
                   Logout
                 </button>
-              </div>
-            ) : (
-              <div className="border-l pl-4 ml-2">
-                <Link
-                  href="/login"
-                  className="text-sm font-semibold text-black border border-gray-200 hover:bg-gray-50 px-5 py-2 rounded-full transition"
-                >
-                  Sign In
-                </Link>
               </div>
             )}
           </nav>
         </div>
       </header>
 
-      {/* Main Container - Desktop: 3 Col, Mobile/Tablet: 1 Col */}
-      <div className="max-w-6xl mx-auto w-full md:px-6 md:py-8 flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
-        {/* Left Filter Column (Desktop Sidebar / Mobile Horizontal Scroll) */}
-        <aside className="lg:col-span-1 border-b md:border-b-0 bg-white md:bg-transparent">
-          <div className="sticky top-20 p-2 md:p-0 overflow-x-auto no-scrollbar md:bg-white md:p-4 md:rounded-2xl md:border md:shadow-sm">
-            <h3 className="hidden md:block font-bold text-sm text-gray-400 uppercase tracking-wider mb-3 px-2">Feed Filters</h3>
-            <div className="flex flex-row lg:flex-col gap-2 min-w-max px-2 md:px-0">
-              {[
-                { id: "all", label: "For You" },
-                { id: "birth_info", label: "👶 Births" },
-                { id: "marriage_info", label: "💍 Marriages" },
-                { id: "death_info", label: "🪦 Deaths" },
-                { id: "general_news", label: "📢 Announcements" },
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setCategoryFilter(cat.id)}
-                  className={`px-4 py-2 md:w-full md:text-left rounded-full md:rounded-xl text-sm font-bold transition-all ${
-                    categoryFilter === cat.id
-                      ? "bg-black text-white md:bg-gray-100 md:text-black"
-                      : "bg-gray-100 text-gray-600 md:bg-transparent hover:bg-gray-50"
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        {/* Central Feed Column (Threads-style constrained width) */}
-        <main className="lg:col-span-2 w-full max-w-2xl mx-auto md:bg-white md:rounded-3xl md:border md:shadow-sm overflow-hidden mb-20 md:mb-0">
+      {/* 3. Hero Section (Gradient background, big typography, and welcome portrait card) */}
+      <section className="relative bg-gradient-to-b from-slate-900 via-indigo-950 to-indigo-900 text-white overflow-hidden py-16 md:py-24 px-4 md:px-6">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_70%_30%,_#ef4444_0%,_transparent_50%)]" />
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
           
-          <div className="p-4 md:p-6 border-b bg-white/50 backdrop-blur-sm sticky top-0 md:static z-10">
-            <h2 className="font-bold text-xl text-gray-900">Feed</h2>
+          {/* Hero Left Content */}
+          <div className="lg:col-span-7 space-y-6 animate-fade-in-up">
+            <span className="inline-block bg-red-600/30 border border-red-500/40 text-red-300 text-xs px-3.5 py-1.5 rounded-full font-bold uppercase tracking-wider">
+              Legal Identity & Civil Protection
+            </span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
+              Support Us to Build a <span className="text-red-400">Strong & Verified</span> Digital Civil System
+            </h2>
+            <p className="text-slate-300 text-base md:text-lg leading-relaxed max-w-xl">
+              SVERA coordinates accurate documentation of all births, marriages, and deaths across the Sidama region, laying the foundation for development, policy planning, and civil rights protection.
+            </p>
+            <div className="flex flex-wrap gap-4 pt-2">
+              <Link
+                href="/about"
+                className="px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition shadow-lg shadow-red-900/30"
+              >
+                Learn Civil Processes
+              </Link>
+              <Link
+                href="/events"
+                className="px-6 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-bold rounded-xl transition"
+              >
+                Registration Drives
+              </Link>
+            </div>
           </div>
 
-          {posts.length === 0 ? (
-            <div className="text-center py-20 text-gray-400 font-medium">
-              No posts found for this category.
+          {/* Hero Right: Mayor-styled Welcome Card */}
+          <div className="lg:col-span-5 bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 shadow-2xl space-y-5 animate-scale-up">
+            <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-800 border border-white/10 group flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent z-10" />
+              <img
+                src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=600&auto=format&fit=crop"
+                alt="Director General"
+                className="object-cover w-full h-full opacity-90 group-hover:scale-105 transition duration-500"
+              />
+              <div className="absolute z-20 w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg transition-transform hover:scale-110 cursor-pointer">
+                <PlayIcon />
+              </div>
+              <span className="absolute bottom-4 left-4 z-20 text-xs font-bold text-red-400 uppercase tracking-widest bg-slate-900/60 px-2.5 py-1 rounded">
+                Introductory Video
+              </span>
             </div>
-          ) : (
-            <div className="flex flex-col">
-              {posts.map((post) => (
-                <article
-                  key={post.id}
-                  className="border-b last:border-b-0 hover:bg-gray-50/50 transition duration-200 px-4 md:px-6 py-4 md:py-5"
-                >
-                  <div className="flex gap-3 md:gap-4">
-                    {/* Avatar Column */}
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-tr from-gray-100 to-gray-200 border flex items-center justify-center font-bold text-gray-700 shadow-sm flex-shrink-0 z-10">
-                        {post.author?.full_name?.charAt(0)?.toUpperCase() || "A"}
-                      </div>
-                      {/* Thread connecting line */}
-                      <div className="w-0.5 bg-gray-200 flex-1 mt-2 mb-1 rounded-full"></div>
-                    </div>
 
-                    {/* Content Column */}
-                    <div className="flex-1 pb-2 min-w-0">
-                      {/* Header row */}
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span className="font-bold text-[15px] text-gray-900 truncate">
-                            {post.author?.full_name || "SVERA Admin"}
-                          </span>
-                          {post.author?.role === 'admin' && (
-                             <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
-                               <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                             </svg>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                           <span className="text-[14px] text-gray-400">
-                             {getRelativeTime(post.created_at)}
-                           </span>
-                           <button className="text-gray-400 hover:text-gray-900 transition p-1">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-                           </button>
-                        </div>
-                      </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-white leading-tight">Welcome to Sidama Civil Registry</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                &ldquo;Every Sidama citizen deserves a legally recognized status. SVERA works day and night to digitize and expand access to birth, marriage, and death registrations across all woredas.&rdquo;
+              </p>
+              <div className="pt-2 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-bold text-xs">
+                  DG
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold">Director General of SVERA</h4>
+                  <p className="text-[10px] text-slate-400">Head of Sidama Vital Events Agency</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                      {/* Post Tag/Category */}
-                      <div className="mt-1">
-                        <span className="text-[12px] font-semibold text-gray-500">
-                          {getCategoryLabel(post.category)}
-                        </span>
-                      </div>
+        </div>
+      </section>
 
-                      {/* Body */}
-                      <h3 className="font-bold text-gray-900 mt-2 text-[15px] leading-snug">{post.title}</h3>
-                      <p className="text-gray-800 text-[15px] leading-relaxed mt-1 whitespace-pre-line break-words">
-                        {post.content}
-                      </p>
+      {/* 4. Be Updated with Agency News Grid */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-16">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
+          <div>
+            <span className="text-xs font-black text-red-600 uppercase tracking-wider">Civil Announcements</span>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Be Updated with SVERA News</h2>
+            <p className="text-slate-500 text-sm mt-1">Stay updated with official news, registry updates, and public safety announcements.</p>
+          </div>
+          
+          {/* Feed Filter Buttons */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "all", label: "All News" },
+              { id: "birth_info", label: "👶 Births" },
+              { id: "marriage_info", label: "💍 Marriages" },
+              { id: "death_info", label: "🪦 Deaths" },
+              { id: "general_news", label: "📢 Announcements" },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setCategoryFilter(cat.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  categoryFilter === cat.id
+                    ? "bg-red-600 text-white shadow-sm"
+                    : "bg-white border text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-                      {/* Media */}
-                      {post.image_url && (
-                        <div className="mt-3.5 rounded-2xl md:rounded-3xl overflow-hidden border border-gray-200/75 bg-gray-100 flex items-center justify-center">
-                          <img
-                            src={post.image_url}
-                            alt={post.title}
-                            className="object-cover max-h-[500px] w-full"
-                            loading="lazy"
-                          />
-                        </div>
-                      )}
-
-                      {/* Action Bar */}
-                      <div className="mt-4 flex items-center gap-4 text-gray-500">
-                        <button
-                          onClick={() => toggleComments(post.id)}
-                          className="flex items-center gap-2 group p-1.5 -ml-1.5 rounded-full hover:bg-gray-100 transition"
-                        >
-                          <span className="group-hover:text-blue-600 transition-colors">
-                            <ChatIcon />
-                          </span>
-                          {/* Could show comment count here if backend returns it */}
-                          {(expandedComments[post.id] || (commentsMap[post.id] && commentsMap[post.id].length > 0)) && (
-                            <span className="text-xs font-semibold mt-0.5 group-hover:text-blue-600">
-                               {commentsMap[post.id]?.length || "..."}
-                            </span>
-                          )}
-                        </button>
-                      </div>
-
-                    </div>
+        {posts.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/60 text-slate-400">
+            No news articles posted yet in this category.
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {posts.slice(0, 4).map((post) => (
+              <article
+                key={post.id}
+                className="bg-white rounded-3xl border border-slate-200/60 overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between"
+              >
+                <div>
+                  {/* Card Image */}
+                  <div className="relative aspect-[4/3] bg-slate-100 flex items-center justify-center overflow-hidden border-b">
+                    <img
+                      src={post.image_url || "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop"}
+                      alt={post.title}
+                      className="object-cover w-full h-full"
+                    />
+                    <span className="absolute top-3 right-3 bg-red-600 text-white font-bold text-[9px] uppercase px-2.5 py-1 rounded-full tracking-wider shadow">
+                      {getCategoryLabel(post.category)}
+                    </span>
                   </div>
 
-                  {/* Comments Section (Thread style nested) */}
-                  {expandedComments[post.id] && (
-                    <div className="ml-10 md:ml-12 mt-1">
-                      
-                      {/* Comments List */}
-                      {commentsMap[post.id] && commentsMap[post.id].length > 0 && (
-                        <div className="space-y-4 mb-4 mt-2">
-                          {commentsMap[post.id].map((comment) => (
-                             <div key={comment.id} className="flex gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gray-100 border flex items-center justify-center font-bold text-gray-600 text-xs flex-shrink-0">
-                                   {comment.author?.full_name?.charAt(0)?.toUpperCase() || "C"}
-                                </div>
-                                <div className="flex-1 pb-3 border-b border-gray-100 last:border-b-0">
-                                   <div className="flex justify-between items-center">
-                                      <span className="font-bold text-[14px] text-gray-900">
-                                        {comment.author?.full_name || "Citizen"}
-                                      </span>
-                                      <span className="text-[12px] text-gray-400">
-                                        {getRelativeTime(comment.created_at)}
-                                      </span>
-                                   </div>
-                                   <p className="text-[14px] text-gray-800 mt-0.5 leading-snug">
-                                      {comment.content}
-                                   </p>
-                                </div>
-                             </div>
-                          ))}
-                        </div>
-                      )}
+                  {/* Card Body */}
+                  <div className="p-5 space-y-2">
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                      {getRelativeTime(post.created_at)}
+                    </span>
+                    <h3 className="font-extrabold text-slate-900 text-base leading-snug hover:text-red-600 transition cursor-pointer">
+                      {post.title}
+                    </h3>
+                    <p className="text-slate-600 text-xs leading-relaxed line-clamp-3">
+                      {post.content}
+                    </p>
+                  </div>
+                </div>
 
-                      {/* Reply Input Form */}
-                      <div className="flex gap-3 mt-4 items-center">
-                         <div className="w-8 h-8 rounded-full bg-black flex-shrink-0 flex items-center justify-center">
-                            <span className="text-white font-bold text-xs">
-                              {currentUser?.full_name?.charAt(0)?.toUpperCase() || "?"}
-                            </span>
-                         </div>
-                         {currentUser ? (
-                           <form
-                             onSubmit={(e) => handleSubmitComment(e, post.id)}
-                             className="flex-1 flex items-center gap-2 bg-gray-100 rounded-full pl-4 pr-1 py-1 border border-transparent focus-within:border-gray-300 focus-within:bg-white transition-all"
-                           >
-                             <input
-                               type="text"
-                               placeholder={`Reply to ${post.author?.full_name?.split(' ')[0] || "admin"}...`}
-                               value={commentInput[post.id] || ""}
-                               onChange={(e) =>
-                                 setCommentInput((prev) => ({
-                                   ...prev,
-                                   [post.id]: e.target.value,
-                                 }))
-                               }
-                               required
-                               className="flex-1 text-[14px] bg-transparent focus:outline-none py-1.5"
-                             />
-                             <button
-                               type="submit"
-                               disabled={!commentInput[post.id]?.trim()}
-                               className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
-                                 commentInput[post.id]?.trim() ? "bg-black text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                               }`}
-                             >
-                               <SendIcon />
-                             </button>
-                           </form>
-                         ) : (
-                           <div className="flex-1 bg-gray-50 rounded-full px-4 py-2 border text-[13px] text-gray-500 flex items-center justify-between">
-                              <span>Log in to reply</span>
-                              <Link href="/login" className="font-bold text-black hover:underline">Log in</Link>
-                           </div>
-                         )}
-                      </div>
+                {/* Card Footer */}
+                <div className="p-5 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold">
+                      {post.author?.full_name?.charAt(0) || "A"}
                     </div>
-                  )}
+                    <span className="text-xs font-semibold text-slate-700">{post.author?.full_name || "SVERA Staff"}</span>
+                  </div>
+                  <button
+                    onClick={() => toggleComments(post.id)}
+                    className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
+                  >
+                    <ChatIcon />
+                    Comments
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
-                </article>
+      {/* 5. Departments & Information Desk (Grid and Hotlines Sidebar) */}
+      <section className="bg-slate-100/80 border-y border-slate-200/50 py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
+          
+          {/* Desk List Grid */}
+          <div className="lg:col-span-8 space-y-6">
+            <div>
+              <span className="text-xs font-black text-red-600 uppercase tracking-wider">Departments & Services</span>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Registration Desks & Information</h2>
+              <p className="text-slate-500 text-sm mt-1">Find the direct service counters for civil processes and certificates.</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {deskServices.map((desk) => (
+                <div
+                  key={desk.label}
+                  className={`bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col items-center justify-center text-center gap-3 hover:-translate-y-1 transition duration-300`}
+                >
+                  <div className="text-3xl">{desk.icon}</div>
+                  <h3 className="font-extrabold text-slate-800 text-sm">{desk.label}</h3>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Public Service</span>
+                </div>
               ))}
             </div>
-          )}
-        </main>
+          </div>
 
-        {/* Right Side Nav (Desktop only) */}
-        <aside className="hidden lg:block lg:col-span-1">
-           <div className="sticky top-20 text-xs text-gray-400 space-y-4">
-              <p>© {new Date().getFullYear()} SVERA</p>
-              <div className="flex gap-3 flex-wrap">
-                <Link href="#" className="hover:underline">About</Link>
-                <Link href="#" className="hover:underline">Privacy</Link>
-                <Link href="#" className="hover:underline">Terms</Link>
+          {/* Sidebar / Helplines Card */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-indigo-950 text-white rounded-3xl p-6 shadow-lg border border-indigo-900">
+              <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+                📞 Helplines & Vital Services
+              </h3>
+              <ul className="space-y-3.5 text-sm">
+                <li className="flex justify-between items-center py-2 border-b border-indigo-900/60 hover:text-red-400 transition cursor-pointer">
+                  <span>Director General&apos;s Desk</span>
+                  <span>dg@svera.gov.et</span>
+                </li>
+                <li className="flex justify-between items-center py-2 border-b border-indigo-900/60 hover:text-red-400 transition cursor-pointer">
+                  <span>Birth & Certificates Desk</span>
+                  <span>+251 46 220 1234</span>
+                </li>
+                <li className="flex justify-between items-center py-2 border-b border-indigo-900/60 hover:text-red-400 transition cursor-pointer">
+                  <span>Marriage Registration Desk</span>
+                  <span>+251 46 220 5678</span>
+                </li>
+                <li className="flex justify-between items-center py-2 border-b border-indigo-900/60 hover:text-red-400 transition cursor-pointer">
+                  <span>Death & Civil Amendments</span>
+                  <span>+251 46 220 9012</span>
+                </li>
+                <li className="flex justify-between items-center py-2 hover:text-red-400 transition cursor-pointer">
+                  <span>Regional IT Support Desk</span>
+                  <span>support@svera.gov.et</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-white border rounded-3xl p-6 shadow-sm">
+              <h3 className="font-extrabold text-slate-900 text-sm uppercase tracking-wider mb-3">Civil Resources</h3>
+              <ul className="space-y-2.5 text-xs font-semibold text-slate-600">
+                <li className="hover:text-red-600 transition cursor-pointer">📄 SVERA Annual Registry Report (2025)</li>
+                <li className="hover:text-red-600 transition cursor-pointer">📄 Birth Registration Requirements Document</li>
+                <li className="hover:text-red-600 transition cursor-pointer">📄 Regional Vital Events Code Booklet</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 6. Recent Events & Upcoming schedules list */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          
+          {/* Featured Highlight card (Recent Events block style) */}
+          <div className="lg:col-span-6 space-y-5">
+            <div>
+              <span className="text-xs font-black text-red-600 uppercase tracking-wider">Registry Operations</span>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Featured Initiative</h2>
+            </div>
+            <div className="relative rounded-3xl overflow-hidden aspect-[4/3] bg-slate-900 border shadow-lg group">
+              <img
+                src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=800&auto=format&fit=crop"
+                alt="Digital Training"
+                className="object-cover w-full h-full opacity-80 group-hover:scale-105 transition duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6 text-white space-y-2">
+                <span className="bg-red-600 text-white font-bold text-[9px] uppercase px-2 py-0.5 rounded tracking-wider">
+                  Technology Drive
+                </span>
+                <h3 className="font-extrabold text-lg md:text-xl leading-tight">
+                  Implementing Digital Registry at Woreda Levels
+                </h3>
+                <p className="text-slate-300 text-xs leading-relaxed max-w-sm">
+                  SVERA is currently deploying modern desktop registration terminals to 12 district offices to phase out paper-based processes.
+                </p>
               </div>
-           </div>
-        </aside>
-      </div>
-      
-      {/* Mobile Bottom Navigation Bar (Appears only on small screens) */}
-      <nav className="md:hidden fixed bottom-0 w-full bg-white border-t flex justify-around items-center py-3 pb-safe z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
-         <Link href="/" className="flex flex-col items-center text-black">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-         </Link>
-         
-         <Link href="/submit-request" className="flex flex-col items-center text-gray-400 hover:text-black transition">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-         </Link>
+            </div>
+          </div>
 
-         {currentUser && (
-           <Link href="/chat" className="flex flex-col items-center text-gray-400 hover:text-black transition">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-           </Link>
-         )}
+          {/* Upcoming Schedules listing */}
+          <div className="lg:col-span-6 space-y-5">
+            <div>
+              <span className="text-xs font-black text-red-600 uppercase tracking-wider">Calendar Dates</span>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Upcoming Schedules</h2>
+            </div>
 
-         {currentUser?.role === 'admin' && (
-           <Link href="/admin/inbox" className="flex flex-col items-center text-gray-400 hover:text-black transition">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
-           </Link>
-         )}
-      </nav>
+            {events.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/60 text-slate-400">
+                No upcoming community schedules found.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {events.slice(0, 3).map((event) => {
+                  const evDate = formatEventDate(event.event_date);
+                  return (
+                    <div
+                      key={event.id}
+                      className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-4 flex gap-4 items-center hover:shadow-md transition duration-300"
+                    >
+                      {/* Event Date Badge */}
+                      <div className="w-16 h-16 rounded-xl bg-red-50 border border-red-100 flex flex-col items-center justify-center text-center flex-shrink-0">
+                        <span className="text-red-600 text-2xl font-black leading-none">{evDate.day}</span>
+                        <span className="text-red-700 text-[10px] font-bold uppercase tracking-wider mt-1">{evDate.month}</span>
+                      </div>
+                      
+                      {/* Event Text */}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <h4 className="font-extrabold text-slate-900 text-sm md:text-base leading-tight truncate">
+                          {event.title}
+                        </h4>
+                        <div className="flex flex-wrap gap-x-3 text-xs text-gray-500">
+                          <span>🕐 {evDate.time}</span>
+                          {event.location && (
+                            <span className="truncate">📍 {event.location}</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Action Button */}
+                      <Link
+                        href="/events"
+                        className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-lg transition flex-shrink-0"
+                      >
+                        Join Drive
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </section>
+
+      {/* 7. Explore Community & Meet Officials */}
+      <section className="bg-slate-100/80 border-t py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
+          
+          {/* Explore directory */}
+          <div className="lg:col-span-6 space-y-5">
+            <h2 className="text-2xl font-black text-slate-900">Explore SVERA</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {[
+                { title: "Public Sensitization Drives", desc: "Local campaigns on children rights" },
+                { title: "Woreda Record Desks", desc: "Addresses and contacts of district desks" },
+                { title: "Marriage Regulations", desc: "Required documents for civil spouse registration" },
+                { title: "Death Certificate Guides", desc: "Legal processes and guidelines" },
+                { title: "Annual Vital Statistics", desc: "Explore regional population metrics" },
+                { title: "SVERA Civil Guidelines", desc: "Detailed records code brochure" },
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200/50 flex gap-3 hover:-translate-y-0.5 transition duration-200 cursor-pointer">
+                  <span className="text-red-500 font-extrabold">▶</span>
+                  <div>
+                    <h4 className="font-extrabold text-slate-800 text-xs">{item.title}</h4>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* SVERA leadership grid */}
+          <div className="lg:col-span-6 space-y-5">
+            <h2 className="text-2xl font-black text-slate-900">Meet SVERA Officials</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  name: "Director General",
+                  role: "Head of Agency",
+                  img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=300&auto=format&fit=crop",
+                },
+                {
+                  name: "Divisional Director",
+                  role: "Civil Records & Statistics",
+                  img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop",
+                },
+              ].map((person, idx) => (
+                <div key={idx} className="bg-white rounded-2xl border shadow-sm overflow-hidden flex items-center gap-4 p-4 hover:shadow-md transition">
+                  <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-slate-100">
+                    <img src={person.img} alt={person.name} className="object-cover w-full h-full" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-sm">{person.name}</h4>
+                    <p className="text-xs text-red-600 font-semibold">{person.role}</p>
+                    <span className="text-[10px] text-gray-400">SVERA Sidama</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 8. Newsletter & emergency contacts widgets */}
+      <section className="bg-red-700 text-white py-14 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-6 space-y-2">
+            <h3 className="text-xl font-black">Stay Updated with SVERA Notice Bulletins</h3>
+            <p className="text-red-100 text-xs leading-relaxed max-w-sm">
+              Subscribe to receive legal notifications, registration deadlines, and regional vital event metrics updates.
+            </p>
+            <div className="flex gap-2 pt-2">
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                className="px-4 py-2.5 rounded-lg text-slate-800 text-xs font-semibold focus:outline-none flex-1 max-w-xs"
+              />
+              <button className="bg-slate-950 hover:bg-slate-900 px-5 py-2.5 rounded-lg text-xs font-bold transition">
+                Subscribe
+              </button>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 grid grid-cols-3 gap-4 text-center">
+            {[
+              { num: "911", label: "Public Help Desk" },
+              { num: "177", label: "Statistics Inquiry" },
+              { num: "103", label: "Woreda Coordinator" },
+            ].map((widget, idx) => (
+              <div key={idx} className="bg-white/10 p-4 rounded-2xl border border-white/15">
+                <span className="text-yellow-300 text-2xl font-black block">{widget.num}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider block mt-1.5 text-red-100">{widget.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 9. Footer Details */}
+      <footer className="bg-slate-950 text-slate-400 py-16 px-4 md:px-6 border-t border-slate-900">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-red-600 text-white rounded-lg flex items-center justify-center font-black text-sm">
+                SV
+              </div>
+              <span className="font-extrabold text-white text-base">SVERA</span>
+            </div>
+            <p className="text-xs leading-relaxed max-w-xs">
+              Sidama Regional Vital Events Registration Agency coordinates secure civil registration services to secure legal rights for everyone.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-white text-xs font-extrabold uppercase tracking-wider mb-4">SVERA Offices</h4>
+            <ul className="space-y-2 text-xs">
+              <li className="hover:text-white transition">Hawassa Head Office</li>
+              <li className="hover:text-white transition">Yirgalem District Desk</li>
+              <li className="hover:text-white transition">Bona Woreda Desk</li>
+              <li className="hover:text-white transition">Aleta Wondo Office</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-white text-xs font-extrabold uppercase tracking-wider mb-4">Gov. Links</h4>
+            <ul className="space-y-2 text-xs">
+              <li className="hover:text-white transition">Sidama Regional Portal</li>
+              <li className="hover:text-white transition">Ethiopian Civil Registry Agency</li>
+              <li className="hover:text-white transition">Ministry of Justice Ethiopia</li>
+            </ul>
+          </div>
+
+          <div className="bg-indigo-950/40 border border-indigo-900 p-5 rounded-2xl space-y-2">
+            <h4 className="text-white text-xs font-extrabold uppercase tracking-wider">Civil Desk Support</h4>
+            <p className="text-[11px] leading-relaxed">
+              If you require a birth or marriage document lookup, please make an appointment at your local woreda desk. SVERA offices are open Mon-Fri 8:00 AM - 5:00 PM.
+            </p>
+          </div>
+
+        </div>
+
+        <div className="max-w-7xl mx-auto border-t border-slate-900 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+          <p>© {new Date().getFullYear()} SVERA — Sidama Vital Events Registration Agency. All Rights Reserved.</p>
+          <div className="flex gap-4">
+            <Link href="/about" className="hover:underline">About</Link>
+            <Link href="/events" className="hover:underline">Events</Link>
+          </div>
+        </div>
+      </footer>
 
     </div>
   );
