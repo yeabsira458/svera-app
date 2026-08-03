@@ -19,15 +19,15 @@ export default function RegisterPage() {
     const formData = new FormData(e.currentTarget);
     try {
       const res = await signUpUser(formData);
+      // Only reach here on error — redirect() never returns
       if (res?.error) {
         setErrorMsg(res.error);
-      } else {
-        // Redirect to homepage on successful sign up
-        window.location.href = "/";
+        setLoading(false);
       }
     } catch (err: any) {
+      // Re-throw Next.js redirect so navigation actually happens
+      if (err?.digest?.startsWith("NEXT_REDIRECT")) throw err;
       setErrorMsg("Registration failed. Please try again.");
-    } finally {
       setLoading(false);
     }
   };

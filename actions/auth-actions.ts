@@ -3,6 +3,7 @@
 
 import { createClient } from "@/utils/supabase";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function signUpUser(formData: FormData) {
   const email = formData.get("email") as string;
@@ -35,14 +36,15 @@ export async function signUpUser(formData: FormData) {
       .from("profiles")
       .update({ phone_number: phoneNumber })
       .eq("id", data.user.id);
-    
+
     if (profileError) {
       console.error("Error updating phone number in profile:", profileError);
     }
   }
 
   revalidatePath("/");
-  return { success: true };
+  // Server-side redirect — ensures session cookie is flushed before browser navigates
+  redirect("/");
 }
 
 export async function signInUser(formData: FormData) {
@@ -62,5 +64,6 @@ export async function signInUser(formData: FormData) {
   }
 
   revalidatePath("/");
-  return { success: true };
+  // Server-side redirect — ensures session cookie is flushed before browser navigates
+  redirect("/");
 }

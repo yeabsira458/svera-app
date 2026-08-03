@@ -19,15 +19,15 @@ export default function LoginPage() {
     const formData = new FormData(e.currentTarget);
     try {
       const res = await signInUser(formData);
+      // Only reach here on error — redirect() never returns
       if (res?.error) {
         setErrorMsg(res.error);
-      } else {
-        // Force fully reloading landing page to refresh header session context
-        window.location.href = "/";
+        setLoading(false);
       }
     } catch (err: any) {
-      setErrorMsg("An unexpected error occurred. Please try again.");
-    } finally {
+      // Re-throw Next.js redirect so navigation actually happens
+      if (err?.digest?.startsWith("NEXT_REDIRECT")) throw err;
+      setErrorMsg("Sign in failed. Please check your credentials.");
       setLoading(false);
     }
   };
