@@ -14,11 +14,10 @@ export async function getEvents() {
 
   const { data, error } = await supabase
     .from("events")
-    .select(`
-      *,
-      author:profiles!events_author_id_fkey(id, full_name, avatar_url)
-    `)
-    .order("event_date", { ascending: true });
+    .select("id, title, description, event_date, location, image_url")
+    .gte("event_date", new Date().toISOString())   // upcoming only
+    .order("event_date", { ascending: true })
+    .limit(3);
 
   if (error) {
     console.error("Error fetching events:", error);

@@ -1,16 +1,11 @@
 // app/page.tsx
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  getPosts,
-  getPostComments,
-  addComment,
-  getCurrentUser,
-  signOutUser,
-} from "@/actions/post-actions";
+import { getPosts } from "@/actions/post-actions";
 import { getEvents } from "@/actions/event-actions";
+import Header from "@/components/Header";
 
 // SVG Icons
 const PlayIcon = () => (
@@ -26,52 +21,14 @@ const PlayIcon = () => (
   </svg>
 );
 
-const SearchIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="11" cy="11" r="8"></circle>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-  </svg>
-);
-
-const ChatIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-  </svg>
-);
-
 export default function LandingPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
-  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [commentsMap, setCommentsMap] = useState<{ [postId: string]: any[] }>({});
-  const [expandedComments, setExpandedComments] = useState<{ [postId: string]: boolean }>({});
-  const [isPending, startTransition] = useTransition();
 
-  // Load feed, events, and auth state on mount
+  // Load feed and events on mount
   useEffect(() => {
     loadFeed();
-    checkAuth();
     loadEvents();
   }, [categoryFilter]);
 
@@ -90,36 +47,6 @@ export default function LandingPage() {
       setEvents(data);
     } catch (err) {
       console.error("Failed to load events", err);
-    }
-  };
-
-  const checkAuth = async () => {
-    try {
-      const user = await getCurrentUser();
-      setCurrentUser(user);
-    } catch (err) {
-      console.error("Auth check failed", err);
-    }
-  };
-
-  const handleSignOut = () => {
-    startTransition(async () => {
-      await signOutUser();
-      setCurrentUser(null);
-    });
-  };
-
-  const toggleComments = async (postId: string) => {
-    const isExpanded = expandedComments[postId];
-    setExpandedComments((prev) => ({ ...prev, [postId]: !isExpanded }));
-
-    if (!isExpanded) {
-      try {
-        const comments = await getPostComments(postId);
-        setCommentsMap((prev) => ({ ...prev, [postId]: comments }));
-      } catch (err) {
-        console.error("Error loading comments", err);
-      }
     }
   };
 
@@ -184,59 +111,7 @@ export default function LandingPage() {
       </div>
 
       {/* 2. Main Header */}
-      <header className="sticky top-0 bg-white/95 backdrop-blur-md border-b z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
-          {/* Logo & Agency Name */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-red-600 to-amber-500 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-md">
-              SV
-            </div>
-            <div>
-              <h1 className="font-black text-xl tracking-tight text-slate-900 leading-none">
-                SVERA
-              </h1>
-              <span className="text-[10px] text-gray-500 font-semibold tracking-wider uppercase">Sidama Vital Events</span>
-            </div>
-          </Link>
-
-          {/* Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-6">
-            <Link href="/" className="text-sm font-bold text-slate-900 hover:text-red-600 transition">
-              Home
-            </Link>
-            <Link href="/about" className="text-sm font-bold text-slate-500 hover:text-slate-950 transition">
-              About Us
-            </Link>
-            <Link href="/events" className="text-sm font-bold text-slate-500 hover:text-slate-950 transition">
-              Upcoming Events
-            </Link>
-
-            {currentUser?.role === "admin" ? (
-              <Link
-                href="/admin/post-news"
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow transition"
-              >
-                Admin Dashboard
-              </Link>
-            ) : (
-              <span className="text-xs text-gray-400 italic">Civil Registration Service</span>
-            )}
-
-            {currentUser && (
-              <div className="flex items-center gap-3 border-l pl-4">
-                <span className="text-xs font-bold text-slate-900">{currentUser.full_name || "Admin"}</span>
-                <button
-                  onClick={handleSignOut}
-                  disabled={isPending}
-                  className="text-xs font-bold text-red-500 hover:text-red-700 transition"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* 3. Hero Section (Gradient background, big typography, and welcome portrait card) */}
       <section className="relative bg-gradient-to-b from-slate-900 via-indigo-950 to-indigo-900 text-white overflow-hidden py-16 md:py-24 px-4 md:px-6">
@@ -378,22 +253,6 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                {/* Card Footer */}
-                <div className="p-5 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold">
-                      {post.author?.full_name?.charAt(0) || "A"}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-700">{post.author?.full_name || "SVERA Staff"}</span>
-                  </div>
-                  <button
-                    onClick={() => toggleComments(post.id)}
-                    className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
-                  >
-                    <ChatIcon />
-                    Comments
-                  </button>
-                </div>
               </article>
             ))}
           </div>
@@ -508,12 +367,16 @@ export default function LandingPage() {
             </div>
 
             {events.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/60 text-slate-400">
-                No upcoming community schedules found.
+              <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/60 text-slate-400 space-y-3">
+                <p className="text-3xl">📅</p>
+                <p className="text-sm font-medium">No upcoming schedules at the moment.</p>
+                <Link href="/events" className="inline-block text-xs font-bold text-red-600 hover:underline">
+                  Browse all events →
+                </Link>
               </div>
             ) : (
               <div className="space-y-4">
-                {events.slice(0, 3).map((event) => {
+                {events.map((event) => {
                   const evDate = formatEventDate(event.event_date);
                   return (
                     <div
@@ -544,14 +407,25 @@ export default function LandingPage() {
                         href="/events"
                         className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-lg transition flex-shrink-0"
                       >
-                        Join Drive
+                        Details
                       </Link>
                     </div>
                   );
                 })}
+
+                {/* See All Events link */}
+                <div className="pt-2">
+                  <Link
+                    href="/events"
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl border-2 border-red-100 text-red-600 font-bold text-sm hover:bg-red-50 transition duration-200"
+                  >
+                    See All Events →
+                  </Link>
+                </div>
               </div>
             )}
           </div>
+
 
         </div>
       </section>
@@ -700,6 +574,7 @@ export default function LandingPage() {
           <div className="flex gap-4">
             <Link href="/about" className="hover:underline">About</Link>
             <Link href="/events" className="hover:underline">Events</Link>
+            <Link href="/news" className="hover:underline">News</Link>
           </div>
         </div>
       </footer>

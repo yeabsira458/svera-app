@@ -1,6 +1,8 @@
 // app/about/page.tsx
 import Link from "next/link";
 import type { Metadata } from "next";
+import AboutStats from "@/components/AboutStats";
+import Header from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "About Us — SVERA | Sidama Vital Events Registration Agency",
@@ -29,13 +31,6 @@ const services = [
     title: "Civil Record Updates",
     desc: "Amendments and corrections to existing civil records through a formal review process.",
   },
-];
-
-const stats = [
-  { value: "50,000+", label: "Records Registered" },
-  { value: "12", label: "District Offices" },
-  { value: "99%", label: "Data Accuracy" },
-  { value: "3 days", label: "Avg. Processing Time" },
 ];
 
 const team = [
@@ -78,32 +73,7 @@ export default function AboutPage() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 bg-white/95 backdrop-blur-md border-b z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-red-600 to-amber-500 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-md">
-              SV
-            </div>
-            <div>
-              <h1 className="font-black text-xl tracking-tight text-slate-900 leading-none">
-                SVERA
-              </h1>
-              <span className="text-[10px] text-gray-500 font-semibold tracking-wider uppercase">Sidama Vital Events</span>
-            </div>
-          </Link>
-          <nav className="flex items-center gap-6">
-            <Link href="/" className="text-sm font-bold text-slate-500 hover:text-slate-950 transition">
-              Home
-            </Link>
-            <Link href="/about" className="text-sm font-bold text-slate-900 hover:text-red-600 transition">
-              About Us
-            </Link>
-            <Link href="/events" className="text-sm font-bold text-slate-500 hover:text-slate-950 transition">
-              Upcoming Events
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-indigo-950 to-indigo-900 text-white">
@@ -138,17 +108,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="border-b bg-white">
-        <div className="max-w-5xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-6">
-          {stats.map((s) => (
-            <div key={s.label} className="text-center">
-              <p className="text-3xl md:text-4xl font-black text-red-600">{s.value}</p>
-              <p className="text-sm text-gray-500 mt-1 font-semibold">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Stats - Replaced with Animated Client Component */}
+      <AboutStats />
 
       {/* Mission */}
       <section className="max-w-5xl mx-auto px-6 py-16 md:py-24">
@@ -247,13 +208,38 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Google Map Section */}
+      <section className="bg-white border-b border-slate-200">
+        <div className="max-w-5xl mx-auto px-6 py-16 md:py-24">
+          <div className="text-center mb-12">
+            <span className="text-xs font-black uppercase tracking-widest text-red-600">Our Location</span>
+            <h2 className="text-3xl md:text-4xl font-black text-slate-950 mt-3">Find Us in Hawassa</h2>
+            <p className="text-gray-500 mt-4 max-w-2xl mx-auto">
+              Visit our headquarters or one of our district offices in the Sidama Region for in-person support and civil document issuance.
+            </p>
+          </div>
+          <div className="rounded-2xl overflow-hidden shadow-lg border border-slate-200 h-[400px] w-full bg-slate-100">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1461.8206682450686!2d38.48254458183362!3d7.044855826086911!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x17b145007949f727%3A0xb53de97b7d499c77!2zU2lkYW1hIFB1YmxpYyBBZmZhaXJzIC0g4YiQ4YuL4YizIOGLiOGIs-GKnSDhirnhipDhibU!5e0!3m2!1sen!2set!4v1785893398694!5m2!1sen!2set"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+            ></iframe>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-slate-950 text-slate-400 py-12 px-6 border-t border-slate-900">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
           <p>© {new Date().getFullYear()} SVERA — Sidama Vital Events Registration Agency. All Rights Reserved.</p>
           <div className="flex gap-6">
-            <Link href="/" className="hover:text-white transition">News</Link>
+            <Link href="/" className="hover:text-white transition">Home</Link>
             <Link href="/events" className="hover:text-white transition">Events</Link>
+            <Link href="/news" className="hover:text-white transition">News</Link>
           </div>
         </div>
       </footer>

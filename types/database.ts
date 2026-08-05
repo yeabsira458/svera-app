@@ -51,6 +51,10 @@ export interface PostWithAuthor extends Post {
   author: Pick<Profile, "id" | "full_name" | "avatar_url" | "role">;
 }
 
+export interface EventWithAuthor extends Event {
+  author: Pick<Profile, "id" | "full_name">;
+}
+
 export interface Database {
   public: {
     Tables: {
