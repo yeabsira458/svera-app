@@ -169,3 +169,37 @@ CREATE INDEX idx_posts_category         ON public.posts (category);
 CREATE INDEX idx_posts_author_id        ON public.posts (author_id);
 CREATE INDEX idx_events_event_date      ON public.events (event_date ASC);
 CREATE INDEX idx_events_author_id       ON public.events (author_id);
+
+-- ============================================================
+-- 4. FAMILY REGISTRATIONS (Admin-posted family resources)
+-- ============================================================
+CREATE TABLE public.family_registrations (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  author_id   UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,
+  description TEXT NOT NULL,
+  type        TEXT NOT NULL CHECK (type IN ('resident_id', 'marriage_cert')),
+  requirements TEXT[] DEFAULT '{}',
+  document_url TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.family_registrations ENABLE ROW LEVEL SECURITY;
+
+-- Public read access
+CREATE POLICY "Family registrations are viewable by everyone"
+  ON public.family_registrations FOR SELECT
+  USING (true);
+
+-- Only admins can manage (insert, update, delete)
+CREATE POLICY "Admins can manage family registrations"
+  ON public.family_registrations FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+CREATE INDEX idx_family_regs_type ON public.family_registrations (type);
+CREATE INDEX idx_family_regs_created_at ON public.family_registrations (created_at DESC);

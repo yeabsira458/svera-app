@@ -5,7 +5,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { getPosts } from "@/actions/post-actions";
 import { getEvents } from "@/actions/event-actions";
+import { getFamilyRegistrations } from "@/actions/family-actions";
 import Header from "@/components/Header";
+import ScrollReveal from "@/components/ScrollReveal";
 
 // SVG Icons
 const PlayIcon = () => (
@@ -24,13 +26,24 @@ const PlayIcon = () => (
 export default function LandingPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
+  const [familyRegs, setFamilyRegs] = useState<any[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   // Load feed and events on mount
   useEffect(() => {
     loadFeed();
     loadEvents();
+    loadFamilyRegs();
   }, [categoryFilter]);
+
+  const loadFamilyRegs = async () => {
+    try {
+      const data = await getFamilyRegistrations();
+      setFamilyRegs(data);
+    } catch (err) {
+      console.error("Failed to load family registrations", err);
+    }
+  };
 
   const loadFeed = async () => {
     try {
@@ -56,6 +69,10 @@ export default function LandingPage() {
         return "👶 Births";
       case "marriage_info":
         return "💍 Marriages";
+      case "divorce_info":
+        return "💔 Divorces";
+      case "adoption_info":
+        return "👪 Adoptions";
       case "death_info":
         return "🪦 Deaths";
       case "general_news":
@@ -184,36 +201,40 @@ export default function LandingPage() {
 
       {/* 4. Be Updated with Agency News Grid */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-16">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
-          <div>
-            <span className="text-xs font-black text-red-600 uppercase tracking-wider">Civil Announcements</span>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Be Updated with SVERA News</h2>
-            <p className="text-slate-500 text-sm mt-1">Stay updated with official news, registry updates, and public safety announcements.</p>
+        <ScrollReveal variant="up">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
+            <div>
+              <span className="text-xs font-black text-red-600 uppercase tracking-wider">Civil Announcements</span>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Be Updated with SVERA News</h2>
+              <p className="text-slate-500 text-sm mt-1">Stay updated with official news, registry updates, and public safety announcements.</p>
+            </div>
+            
+            {/* Feed Filter Buttons */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: "all", label: "All News" },
+                { id: "birth_info", label: "👶 Births" },
+                { id: "marriage_info", label: "💍 Marriages" },
+                { id: "divorce_info", label: "💔 Divorces" },
+                { id: "adoption_info", label: "👪 Adoptions" },
+                { id: "death_info", label: "🪦 Deaths" },
+                { id: "general_news", label: "📢 Announcements" },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setCategoryFilter(cat.id)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    categoryFilter === cat.id
+                      ? "bg-red-600 text-white shadow-sm"
+                      : "bg-white border text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
-          
-          {/* Feed Filter Buttons */}
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: "all", label: "All News" },
-              { id: "birth_info", label: "👶 Births" },
-              { id: "marriage_info", label: "💍 Marriages" },
-              { id: "death_info", label: "🪦 Deaths" },
-              { id: "general_news", label: "📢 Announcements" },
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setCategoryFilter(cat.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  categoryFilter === cat.id
-                    ? "bg-red-600 text-white shadow-sm"
-                    : "bg-white border text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        </ScrollReveal>
 
         {posts.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/60 text-slate-400">
@@ -221,9 +242,9 @@ export default function LandingPage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {posts.slice(0, 4).map((post) => (
+            {posts.slice(0, 4).map((post, i) => (
+              <ScrollReveal key={post.id} delay={i * 80} variant="up">
               <article
-                key={post.id}
                 className="bg-white rounded-3xl border border-slate-200/60 overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between"
               >
                 <div>
@@ -254,9 +275,153 @@ export default function LandingPage() {
                 </div>
 
               </article>
+              </ScrollReveal>
             ))}
           </div>
         )}
+      </section>
+
+      {/* Family Registration Section */}
+      <section className="bg-gradient-to-r from-indigo-950 to-slate-900 text-white py-16 px-4 md:px-6 border-b border-white/5">
+        <div className="max-w-7xl mx-auto space-y-10">
+          <ScrollReveal variant="up">
+            <div className="text-center max-w-2xl mx-auto space-y-3">
+              <span className="inline-block bg-red-600/30 border border-red-500/40 text-red-300 text-xs px-3.5 py-1.5 rounded-full font-bold uppercase tracking-wider">
+                👨‍👩‍👧‍👦 Vital Family Records
+              </span>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight mt-2">Family Registration</h2>
+              <p className="text-slate-300 text-sm max-w-lg mx-auto">
+                Access official guidelines, document checklists, and application files for Resident IDs and Marriage Certificates in the Sidama region.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Resident ID Cards */}
+            <ScrollReveal variant="left" className="space-y-6">
+              <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-white/10 shadow-xl space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-2xl">
+                    🪪
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">Resident ID Services</h3>
+                    <p className="text-xs text-slate-400">Kebele & Woreda Residency Cards</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {familyRegs.filter(r => r.type === "resident_id").length === 0 ? (
+                    // Default Guide
+                    <div className="space-y-4 text-sm text-slate-300">
+                      <p className="font-semibold text-white">General Requirements for Resident ID:</p>
+                      <ul className="space-y-2 list-disc list-inside text-xs text-slate-300">
+                        <li>Official application letter from your local Kebele</li>
+                        <li>Three recent passport-sized photographs</li>
+                        <li>Birth certificate or age validation record</li>
+                        <li>Residency verification letter from landlord/family head</li>
+                      </ul>
+                      <div className="pt-2">
+                        <span className="text-[10px] uppercase font-bold text-orange-400 tracking-wider">
+                          📌 Visit your nearest Woreda office to submit documents
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    familyRegs.filter(r => r.type === "resident_id").map((item) => (
+                      <div key={item.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <h4 className="font-bold text-sm text-white">{item.title}</h4>
+                        <p className="text-xs text-slate-300">{item.description}</p>
+                        {item.requirements && item.requirements.length > 0 && (
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Requirements:</span>
+                            <ul className="list-disc list-inside text-[11px] text-slate-300 space-y-0.5">
+                              {item.requirements.map((req: string, idx: number) => (
+                                <li key={idx}>{req}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {item.document_url && (
+                          <a
+                            href={item.document_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block mt-2 text-xs font-bold text-orange-400 hover:underline"
+                          >
+                            📥 Download Application Form
+                          </a>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Marriage Certificate Cards */}
+            <ScrollReveal variant="right" className="space-y-6">
+              <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-white/10 shadow-xl space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-red-500/20 border border-red-500/30 flex items-center justify-center text-2xl">
+                    💍
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">Marriage Certificate Services</h3>
+                    <p className="text-xs text-slate-400">Official Legal Marriage Registry</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {familyRegs.filter(r => r.type === "marriage_cert").length === 0 ? (
+                    // Default Guide
+                    <div className="space-y-4 text-sm text-slate-300">
+                      <p className="font-semibold text-white">General Requirements for Marriage Certificate:</p>
+                      <ul className="space-y-2 list-disc list-inside text-xs text-slate-300">
+                        <li>Completed joint application form by both spouses</li>
+                        <li>Valid Resident IDs of both spouses</li>
+                        <li>Official presence and signatures of 3 legal witnesses</li>
+                        <li>Two passport-sized photographs of each spouse</li>
+                      </ul>
+                      <div className="pt-2">
+                        <span className="text-[10px] uppercase font-bold text-red-400 tracking-wider">
+                          📌 Certificates are issued within 5-7 working days after registration
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    familyRegs.filter(r => r.type === "marriage_cert").map((item) => (
+                      <div key={item.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <h4 className="font-bold text-sm text-white">{item.title}</h4>
+                        <p className="text-xs text-slate-300">{item.description}</p>
+                        {item.requirements && item.requirements.length > 0 && (
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Requirements:</span>
+                            <ul className="list-disc list-inside text-[11px] text-slate-300 space-y-0.5">
+                              {item.requirements.map((req: string, idx: number) => (
+                                <li key={idx}>{req}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {item.document_url && (
+                          <a
+                            href={item.document_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block mt-2 text-xs font-bold text-red-400 hover:underline"
+                          >
+                            📥 Download Form/Template
+                          </a>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </ScrollReveal>
+          </div>
+        </div>
       </section>
 
       {/* 5. Departments & Information Desk (Grid and Hotlines Sidebar) */}
@@ -265,28 +430,32 @@ export default function LandingPage() {
           
           {/* Desk List Grid */}
           <div className="lg:col-span-8 space-y-6">
-            <div>
-              <span className="text-xs font-black text-red-600 uppercase tracking-wider">Departments & Services</span>
-              <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Registration Desks & Information</h2>
-              <p className="text-slate-500 text-sm mt-1">Find the direct service counters for civil processes and certificates.</p>
-            </div>
+            <ScrollReveal variant="left">
+              <div>
+                <span className="text-xs font-black text-red-600 uppercase tracking-wider">Departments & Services</span>
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Registration Desks & Information</h2>
+                <p className="text-slate-500 text-sm mt-1">Find the direct service counters for civil processes and certificates.</p>
+              </div>
+            </ScrollReveal>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {deskServices.map((desk) => (
-                <div
-                  key={desk.label}
-                  className={`bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col items-center justify-center text-center gap-3 hover:-translate-y-1 transition duration-300`}
-                >
-                  <div className="text-3xl">{desk.icon}</div>
-                  <h3 className="font-extrabold text-slate-800 text-sm">{desk.label}</h3>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Public Service</span>
-                </div>
+              {deskServices.map((desk, i) => (
+                <ScrollReveal key={desk.label} delay={i * 70} variant="scale">
+                  <div
+                    className={`bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col items-center justify-center text-center gap-3 hover:-translate-y-1 transition duration-300`}
+                  >
+                    <div className="text-3xl">{desk.icon}</div>
+                    <h3 className="font-extrabold text-slate-800 text-sm">{desk.label}</h3>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Public Service</span>
+                  </div>
+                </ScrollReveal>
               ))}
             </div>
           </div>
 
           {/* Sidebar / Helplines Card */}
-          <div className="lg:col-span-4 space-y-6">
+          <ScrollReveal variant="right" className="lg:col-span-4">
+          <div className="space-y-6">
             <div className="bg-indigo-950 text-white rounded-3xl p-6 shadow-lg border border-indigo-900">
               <h3 className="font-black text-lg mb-4 flex items-center gap-2">
                 📞 Helplines & Vital Services
@@ -324,6 +493,7 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
+          </ScrollReveal>
 
         </div>
       </section>
@@ -333,7 +503,8 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
           {/* Featured Highlight card (Recent Events block style) */}
-          <div className="lg:col-span-6 space-y-5">
+          <ScrollReveal variant="left" className="lg:col-span-6">
+          <div className="space-y-5">
             <div>
               <span className="text-xs font-black text-red-600 uppercase tracking-wider">Registry Operations</span>
               <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Featured Initiative</h2>
@@ -358,9 +529,11 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+          </ScrollReveal>
 
           {/* Upcoming Schedules listing */}
-          <div className="lg:col-span-6 space-y-5">
+          <ScrollReveal variant="right" className="lg:col-span-6">
+          <div className="space-y-5">
             <div>
               <span className="text-xs font-black text-red-600 uppercase tracking-wider">Calendar Dates</span>
               <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Upcoming Schedules</h2>
@@ -425,6 +598,7 @@ export default function LandingPage() {
               </div>
             )}
           </div>
+          </ScrollReveal>
 
 
         </div>

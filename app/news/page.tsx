@@ -9,16 +9,20 @@ import Header from "@/components/Header";
 const CATEGORY_LABELS: Record<string, string> = {
   birth_info: "Birth Registration",
   marriage_info: "Marriage Registration",
+  divorce_info: "Divorce Registration",
+  adoption_info: "Adoption Registration",
   death_info: "Death Registration",
   general_news: "General News",
 };
 const CATEGORY_COLORS: Record<string, string> = {
   birth_info: "#27ae60",
   marriage_info: "#8e44ad",
+  divorce_info: "#e74c3c",
+  adoption_info: "#e67e22",
   death_info: "#7f8c8d",
   general_news: "#1a5276",
 };
-const CATEGORIES = ["all", "birth_info", "marriage_info", "death_info", "general_news"];
+const CATEGORIES = ["all", "birth_info", "marriage_info", "divorce_info", "adoption_info", "death_info", "general_news"];
 
 export default function NewsPage() {
   const [news, setNews] = useState<PostWithAuthor[]>([]);
