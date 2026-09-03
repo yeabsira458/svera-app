@@ -24,6 +24,60 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 const CATEGORIES = ["all", "birth_info", "marriage_info", "divorce_info", "adoption_info", "death_info", "general_news"];
 
+const formatDate = (d: string) =>
+  new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+
+function NewsCard({ post, index }: { post: PostWithAuthor; index: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = post.content.length > 150;
+
+  return (
+    <ScrollReveal delay={index * 60}>
+      <article
+        className="rounded-2xl overflow-hidden bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
+        style={{ border: "1px solid #dce6f0" }}
+      >
+        {post.image_url ? (
+          <div className="relative h-48 w-full overflow-hidden">
+            <Image src={post.image_url} alt={post.title} fill className="object-cover hover:scale-105 transition-transform duration-500" />
+          </div>
+        ) : (
+          <div className="h-40 flex items-center justify-center text-5xl" style={{ background: "linear-gradient(135deg, #eaf0fb, #dce6f0)" }}>
+            📰
+          </div>
+        )}
+        <div className="p-5 flex flex-col flex-1">
+          <span
+            className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold text-white mb-3 self-start"
+            style={{ background: CATEGORY_COLORS[post.category] ?? "#1a5276" }}
+          >
+            {CATEGORY_LABELS[post.category] ?? post.category}
+          </span>
+          <h3 className="font-bold text-base leading-snug mb-2 line-clamp-2" style={{ color: "#0d2137" }}>
+            {post.title}
+          </h3>
+          <div className="flex-1 flex flex-col items-start">
+            <p className={`text-sm text-gray-500 leading-relaxed ${expanded ? "" : "line-clamp-4"}`}>
+              {post.content}
+            </p>
+            {isLong && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="mt-2 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                {expanded ? "Show less" : "Read more"}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 w-full">
+            <p className="text-xs text-gray-400">{formatDate(post.created_at)}</p>
+          </div>
+        </div>
+      </article>
+    </ScrollReveal>
+  );
+}
+
 export default function NewsPage() {
   const [news, setNews] = useState<PostWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,8 +102,7 @@ export default function NewsPage() {
     return matchCat && matchSearch;
   });
 
-  const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-gray-800">
@@ -136,37 +189,7 @@ export default function NewsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((post, i) => (
-              <ScrollReveal key={post.id} delay={i * 60}>
-                <article
-                  className="rounded-2xl overflow-hidden bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
-                  style={{ border: "1px solid #dce6f0" }}
-                >
-                  {post.image_url ? (
-                    <div className="relative h-48 w-full overflow-hidden">
-                      <Image src={post.image_url} alt={post.title} fill className="object-cover hover:scale-105 transition-transform duration-500" />
-                    </div>
-                  ) : (
-                    <div className="h-40 flex items-center justify-center text-5xl" style={{ background: "linear-gradient(135deg, #eaf0fb, #dce6f0)" }}>
-                      📰
-                    </div>
-                  )}
-                  <div className="p-5 flex flex-col flex-1">
-                    <span
-                      className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold text-white mb-3 self-start"
-                      style={{ background: CATEGORY_COLORS[post.category] ?? "#1a5276" }}
-                    >
-                      {CATEGORY_LABELS[post.category] ?? post.category}
-                    </span>
-                    <h3 className="font-bold text-base leading-snug mb-2 line-clamp-2" style={{ color: "#0d2137" }}>
-                      {post.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 line-clamp-4 flex-1 leading-relaxed">{post.content}</p>
-                    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-                      <p className="text-xs text-gray-400">{formatDate(post.created_at)}</p>
-                    </div>
-                  </div>
-                </article>
-              </ScrollReveal>
+              <NewsCard key={post.id} post={post} index={i} />
             ))}
           </div>
         )}

@@ -9,19 +9,7 @@ import { getFamilyRegistrations } from "@/actions/family-actions";
 import Header from "@/components/Header";
 import ScrollReveal from "@/components/ScrollReveal";
 
-// SVG Icons
-const PlayIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className="text-white"
-  >
-    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-  </svg>
-);
+
 
 export default function LandingPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -164,17 +152,18 @@ export default function LandingPage() {
 
           {/* Hero Right: Mayor-styled Welcome Card */}
           <div className="lg:col-span-5 bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 shadow-2xl space-y-5 animate-scale-up">
-            <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-800 border border-white/10 group flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent z-10" />
-              <img
-                src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=600&auto=format&fit=crop"
-                alt="Director General"
-                className="object-cover w-full h-full opacity-90 group-hover:scale-105 transition duration-500"
-              />
-              <div className="absolute z-20 w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg transition-transform hover:scale-110 cursor-pointer">
-                <PlayIcon />
-              </div>
-              <span className="absolute bottom-4 left-4 z-20 text-xs font-bold text-red-400 uppercase tracking-widest bg-slate-900/60 px-2.5 py-1 rounded">
+            <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-800 border border-white/10 group">
+              <video
+                src="https://ngnyeqgenynugnatqxqs.supabase.co/storage/v1/object/public/videos/welcome.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full h-full object-cover rounded-2xl"
+                poster=""
+              >
+                Your browser does not support the video tag.
+              </video>
+              <span className="absolute bottom-4 left-4 z-20 text-xs font-bold text-red-400 uppercase tracking-widest bg-slate-900/60 px-2.5 py-1 rounded pointer-events-none">
                 Introductory Video
               </span>
             </div>
@@ -244,37 +233,38 @@ export default function LandingPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {posts.slice(0, 4).map((post, i) => (
               <ScrollReveal key={post.id} delay={i * 80} variant="up">
-              <article
-                className="bg-white rounded-3xl border border-slate-200/60 overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  {/* Card Image */}
-                  <div className="relative aspect-[4/3] bg-slate-100 flex items-center justify-center overflow-hidden border-b">
-                    <img
-                      src={post.image_url || "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop"}
-                      alt={post.title}
-                      className="object-cover w-full h-full"
-                    />
-                    <span className="absolute top-3 right-3 bg-red-600 text-white font-bold text-[9px] uppercase px-2.5 py-1 rounded-full tracking-wider shadow">
-                      {getCategoryLabel(post.category)}
-                    </span>
-                  </div>
+                <Link href="/news" className="block h-full">
+                  <article
+                    className="bg-white rounded-3xl border border-slate-200/60 overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between h-full"
+                  >
+                    <div>
+                      {/* Card Image */}
+                      <div className="relative aspect-[4/3] bg-slate-100 flex items-center justify-center overflow-hidden border-b">
+                        <img
+                          src={post.image_url || "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop"}
+                          alt={post.title}
+                          className="object-cover w-full h-full"
+                        />
+                        <span className="absolute top-3 right-3 bg-red-600 text-white font-bold text-[9px] uppercase px-2.5 py-1 rounded-full tracking-wider shadow">
+                          {getCategoryLabel(post.category)}
+                        </span>
+                      </div>
 
-                  {/* Card Body */}
-                  <div className="p-5 space-y-2">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                      {getRelativeTime(post.created_at)}
-                    </span>
-                    <h3 className="font-extrabold text-slate-900 text-base leading-snug hover:text-red-600 transition cursor-pointer">
-                      {post.title}
-                    </h3>
-                    <p className="text-slate-600 text-xs leading-relaxed line-clamp-3">
-                      {post.content}
-                    </p>
-                  </div>
-                </div>
-
-              </article>
+                      {/* Card Body */}
+                      <div className="p-5 space-y-2">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                          {getRelativeTime(post.created_at)}
+                        </span>
+                        <h3 className="font-extrabold text-slate-900 text-base leading-snug hover:text-red-600 transition cursor-pointer">
+                          {post.title}
+                        </h3>
+                        <p className="text-slate-600 text-xs leading-relaxed line-clamp-3">
+                          {post.content}
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+                </Link>
               </ScrollReveal>
             ))}
           </div>
