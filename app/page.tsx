@@ -695,9 +695,11 @@ export default function LandingPage() {
           
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-red-600 text-white rounded-lg flex items-center justify-center font-black text-sm">
-                SV
-              </div>
+              <img
+                src="/logo.png"
+                alt="SVERA Logo"
+                className="w-8 h-8 object-contain rounded-full bg-white p-0.5 shadow-sm"
+              />
               <span className="font-extrabold text-white text-base">SVERA</span>
             </div>
             <p className="text-xs leading-relaxed max-w-xs">

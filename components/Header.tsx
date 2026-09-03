@@ -19,9 +19,11 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
         {/* Logo & Agency Name */}
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-tr from-red-600 to-amber-500 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-md">
-            SV
-          </div>
+          <img
+            src="/logo.png"
+            alt="SVERA Logo"
+            className="w-11 h-11 object-contain rounded-full bg-white shadow-sm border border-slate-100"
+          />
           <div>
             <h1 className="font-black text-xl tracking-tight text-slate-900 leading-none">
               SVERA
